@@ -3,8 +3,8 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const apiKey = "041d6f82-c3f9-5100-9012-0671ce41f998";
-const username = "gefuloDRXEEg";
+const apiKey = "dev-bb9d48c0-69be-11ee-bb22-053566ba10ea";
+const username = "haxemagnOyao";
 
 function handleOrderMessage(socket, remoteJid, message, m) {
   if (message.startsWith("!order")) {
@@ -48,9 +48,9 @@ function handleOrderMessage(socket, remoteJid, message, m) {
             const requestDataB = new URLSearchParams();
             requestDataB.append(
               "key",
-              "FXfgGWzuTpCCcTYVI8OOz2h05BMefq23qIOtF6NGNco3mO4kAZ9gYS7ITH0ceFcv"
+              "04yVd3hoRJevkwYF70E6ONI8pweGzWQ1QOZInHmEGCeuhniZJNHw2meQwWnC0ptM"
             );
-            requestDataB.append("sign", "0ef4686aecafb573d4b8ddad2bf5f724");
+            requestDataB.append("sign", "7f76e10c903b6656e366e7dc42e03a57");
             requestDataB.append("type", "get-nickname");
             requestDataB.append("code", "mobile-legends");
             requestDataB.append("target", gameId);
@@ -90,7 +90,7 @@ function handleOrderMessage(socket, remoteJid, message, m) {
 
                 console.log("Success Message:", successMessage);
 
-                const quotedMessage = m ? m.messages[0] : null;
+                const quotedMessage = m.messages[0];
                 const message = {
                   text: successMessage,
                   quoted: quotedMessage,
@@ -126,7 +126,7 @@ function handleOrderMessage(socket, remoteJid, message, m) {
 
             console.log("Success Message:", successMessage);
 
-            const quotedMessage = m ? m.messages[0] : null; // Check if m is defined
+            const quotedMessage = m.messages[0]; // Check if m is defined
             const message = {
               text: successMessage,
               quoted: quotedMessage,
@@ -135,10 +135,13 @@ function handleOrderMessage(socket, remoteJid, message, m) {
           }
         })
         .catch((errorA) => {
-          console.error("Error in Request A:", errorA.message);
-          socket.sendMessage(remoteJid, {
-            text: "Terjadi kesalahan dalam permintaan A.",
-          });
+          console.error("Error in Request A:", errorA.response.data);
+          const quotedMessage = m.messages[0]; // Check if m is defined
+            const message = {
+              text: `${errorA.response.data.data.message}`,
+              quoted: quotedMessage,
+            };
+            socket.sendMessage(remoteJid, message, { quoted: quotedMessage }); 
         });
     } else {
       socket.sendMessage(remoteJid, {

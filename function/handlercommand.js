@@ -36,21 +36,20 @@ async function connectToWhatsapp() {
       if (m.messages[0].message.conversation.startsWith(".add")) {
         await handleAddCommand(socket, remoteJid, m.messages[0].message.conversation);
       } else if (m.messages[0].message.conversation.toUpperCase() === 'MENU') {
-        await handleMenuCommand(socket, remoteJid);
+        await handleMenuCommand(socket, remoteJid, m);
       } else if (m.messages[0].message.conversation.toUpperCase() === 'ML') {
-        await handleMLCommand(socket, remoteJid);
+        await handleMLCommand(socket, remoteJid, m);
       } else if (m.messages[0].message.conversation.toUpperCase() === 'FF') {
-        await handleFFCommand(socket, remoteJid);
+        await handleFFCommand(socket, remoteJid, m);
       } else if (m.messages[0].message.conversation.toUpperCase() === 'PULSA') {
-        await handlePULSACommand(socket, remoteJid);
+        await handlePULSACommand(socket, remoteJid, m);
       } else if (m.messages[0].message.conversation.toUpperCase() === 'PLN') {
-        await handlePLNCommand(socket, remoteJid);
+        await handlePLNCommand(socket, remoteJid, m);
       } else {
         // Handle other cases or commands here
+        const message = m.messages[0].message.conversation;
+        handleOrderMessage(socket, remoteJid, message, m);
       }
-
-      const message = m.messages[0].message.conversation;
-      handleOrderMessage(socket, remoteJid, message);
     }
   });
 }
