@@ -1,9 +1,12 @@
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, useMultiFileAuthState, Mimetype } = require("@whiskeysockets/baileys");
 const Pino = require("pino");
 const { handleOrderMessage } = require("./order.js");
 const { handleAddCommand } = require("./add-group-id.js");
-const { handleMLCommand, handleFFCommand, handlePULSACommand, handlePLNCommand,} = require("./produk.js");
+const { handleMLCommand, handleFFCommand, handlePULSACommand, handlePLNCommand } = require("./produk.js");
 const { handleMenuCommand } = require("./menu.js");
+const { pay } = require("./pay.js");
+
+
 async function connectToWhatsapp() {
   const auth = await useMultiFileAuthState("auth");
   const socket = makeWASocket({
@@ -33,22 +36,29 @@ async function connectToWhatsapp() {
       const remoteJid = m.messages[0].key.remoteJid;
       console.log("Pesan masuk dari ID Grup:", remoteJid);
 
-      if (m.messages[0].message.conversation.startsWith(".add")) {
-        await handleAddCommand(socket, remoteJid, m.messages[0].message.conversation);
-      } else if (m.messages[0].message.conversation.toUpperCase() === 'MENU') {
-        await handleMenuCommand(socket, remoteJid, m);
-      } else if (m.messages[0].message.conversation.toUpperCase() === 'ML') {
-        await handleMLCommand(socket, remoteJid, m);
-      } else if (m.messages[0].message.conversation.toUpperCase() === 'FF') {
-        await handleFFCommand(socket, remoteJid, m);
-      } else if (m.messages[0].message.conversation.toUpperCase() === 'PULSA') {
-        await handlePULSACommand(socket, remoteJid, m);
-      } else if (m.messages[0].message.conversation.toUpperCase() === 'PLN') {
-        await handlePLNCommand(socket, remoteJid, m);
-      } else {
-        // Handle other cases or commands here
-        const message = m.messages[0].message.conversation;
-        handleOrderMessage(socket, remoteJid, message, m);
+      switch (m.messages[0].message.conversation.toUpperCase()) {
+        case 'MENU':
+          await handleMenuCommand(socket, remoteJid, m);
+          break;
+        case 'ML':
+          await handleMLCommand(socket, remoteJid, m);
+          break;
+        case 'FF':
+          await handleFFCommand(socket, remoteJid, m);
+          break;
+        case 'PULSA':
+          await handlePULSACommand(socket, remoteJid, m);
+          break;
+        case 'PLN':
+          await handlePLNCommand(socket, remoteJid, m);
+          break;
+        case 'PAY':
+          await pay(socket, remoteJid, m);
+    break;
+        default:
+          // Handle other cases or commands here
+          const message = m.messages[0].message.conversation;
+          handleOrderMessage(socket, remoteJid, message, m);
       }
     }
   });
