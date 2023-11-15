@@ -29,6 +29,8 @@ async function connectToWhatsapp() {
 
 // ...
 
+// ...
+
 socket.ev.on("messages.upsert", async (m) => {
   if (
     m.messages &&
@@ -49,6 +51,24 @@ socket.ev.on("messages.upsert", async (m) => {
       // Periksa apakah senderNumber adalah owner
       if (senderNumber === owners.owner.number) {
         switch (m.messages[0].message.conversation.toUpperCase()) {
+          case 'ORDER':
+            // Periksa apakah senderNumber adalah owner sebelum menjalankan perintah
+            if (senderNumber === owners.owner.number) {
+              const message = m.messages[0].message.conversation;
+              handleOrderMessage(socket, remoteJid, message, m);
+            } else {
+              console.log(`Akses ditolak untuk ${senderNumber}. Bukan owner.`);
+            }
+            break;
+          case 'PAY':
+            await pay(socket, remoteJid, m);
+            break;
+          default:
+            console.log(`Akses ditolak untuk ${senderNumber}. Bukan owner.`);
+        }
+      } else {
+        // Sender bukan owner
+        switch (m.messages[0].message.conversation.toUpperCase()) {
           case 'MENU':
             await handleMenuCommand(socket, remoteJid, m);
             break;
@@ -64,22 +84,20 @@ socket.ev.on("messages.upsert", async (m) => {
           case 'PLN':
             await handlePLNCommand(socket, remoteJid, m);
             break;
-          case 'PAY':
-            await pay(socket, remoteJid, m);
-            break;
+          // Menambahkan perintah lain yang dapat diakses oleh semua senderNumber di sini
+          // ...
           default:
-            // Handle other cases or commands here
-            const message = m.messages[0].message.conversation;
-            handleOrderMessage(socket, remoteJid, message, m);
+            console.log(`Akses ditolak untuk ${senderNumber}. Bukan owner.`);
         }
-      } else {
-        console.log(`Akses ditolak untuk ${senderNumber}. Bukan owner.`);
       }
     } catch (error) {
       console.error('Error reading owner.json:', error);
     }
   }
 });
+
+// ...
+
 
 }
 
