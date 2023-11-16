@@ -2,8 +2,7 @@ const { default: makeWASocket, useMultiFileAuthState, MessageType } = require("@
 const Pino = require("pino");
 const { handleOrderMessage } = require("./order.js");
 const { handleAddCommand } = require("./add-group-id.js");
-const { handleMLCommand, handleFFCommand, handlePULSACommand, handlePLNCommand } = require("./produk.js");
-const { handleMenuCommand } = require("./menu.js");
+const { handleCommand } = require("./produk.js");
 const { pay } = require("./pay.js");
 
 async function connectToWhatsapp() {
@@ -44,43 +43,47 @@ async function connectToWhatsapp() {
         const ownersData = await fs.readFile('./database/json/owner.json', 'utf-8');
         const owners = JSON.parse(ownersData);
 
-        // Periksa apakah senderNumber adalah owner
-        if (senderNumber === owners.owner.number) {
-          switch (m.messages[0].message.conversation.toUpperCase()) {
-            case 'MENU':
-              await handleMenuCommand(socket, remoteJid, m);
-              break;
-            case 'ML':
-              await handleMLCommand(socket, remoteJid, m);
-              break;
-            case 'FF':
-              await handleFFCommand(socket, remoteJid, m);
-              break;
-            case 'PULSA':
-              await handlePULSACommand(socket, remoteJid, m);
-              break;
-            case 'PLN':
-              await handlePLNCommand(socket, remoteJid, m);
-              break;
-            case 'PAY':
-              await pay(socket, remoteJid, m);
-              break;
-            default:
-              // Handle other cases or commands here
+        // Handler untuk semua pengirim
+        switch (m.messages[0].message.conversation.toUpperCase()) {
+          case 'ORDER':
+            // Periksa apakah senderNumber adalah owner sebelum menjalankan perintah
+            if (senderNumber === owners.owner.number) {
               const message = m.messages[0].message.conversation;
               handleOrderMessage(socket, remoteJid, message, m);
-          }
-        } else {
-          // Akses ditolak, kirim pesan ke nomor pengirim
-          const errorMessage = `Maaf, akses ditolak. Anda bukan owner.`;
-          const quotedMessage = m.messages[0];
-          const responseMessage = {
-            text: errorMessage,
-            quoted: quotedMessage,
-          };
-
-          socket.sendMessage(remoteJid, responseMessage, { quoted: quotedMessage });
-          console.log(`Pesan akses ditolak dikirim ke ${remoteJid}`);
+            } else {
+              console.log(`Akses ditolak untuk ${senderNumber}. Bukan owner.`);
+            }
+            break;
+          case 'PAY':
+            // Handler untuk semua pengirim, tidak perlu memeriksa pemilik
+            await pay(socket, remoteJid, m);
+            break;
+          // Menambahkan perintah lain yang dapat diakses oleh semua senderNumber di sini
+          case 'MENU':
+            await handleCommand(socket, remoteJid, m, 'menu');
+            break;
+          case 'ML':
+            await handleCommand(socket, remoteJid, m, 'ml');
+            break;
+          case 'FF':
+            await handleCommand(socket, remoteJid, m, 'ff');
+            break;
+          case 'PULSA':
+            await handleCommand(socket, remoteJid, m, 'pulsa');
+            break;
+          case 'PLN':
+            await handleCommand(socket, remoteJid, m, 'pln');
+            break;
+          // Menambahkan perintah lain yang dapat diakses oleh owner di sini
+          // ...
+          default:
+            if (senderNumber === owners.owner.number) {
+              // Handler untuk pemilik
+              console.log(`Pesan akses ditolak. Perintah tidak dikenali.`);
+            } else {
+              // Handler untuk non-pemilik
+              console.log(`Pesan akses ditolak. Anda bukan owner.`);
+            }
         }
       } catch (error) {
         console.error('Error reading owner.json:', error);

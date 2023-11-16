@@ -5,12 +5,12 @@ const fs = require('fs');
 const path = require('path');
 
 async function pay(socket, remoteJid, m) {
-  const imagePath = path.join(__dirname, '../database/gambar/seulgi.jpg');
+  const imagePath = path.join(__dirname, '../database/images/pay.jpg');
   const imageBuffer = fs.readFileSync(imagePath);
   const quotedMessage = m.messages[0];
   const messageOptions = {
     image: imageBuffer,
-    caption: 'Ini adalah gambar pembayaran, terima kasih!',
+    caption: 'Ini adalah gambar pembayaran, terima kasih!\nAH AH AH AH AH',
     quoted: quotedMessage,
   };
 
