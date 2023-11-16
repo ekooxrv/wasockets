@@ -1,46 +1,35 @@
 const fs = require('fs').promises;
 
-async function replaceDataInJson(filePath, category, newData) {
+async function handleCommand(socket, remoteJid, m, category) {
   try {
     // Membaca data dari file JSON
-    const data = await fs.readFile(filePath, 'utf-8');
+    const data = await fs.readFile('./database/json/data.json', 'utf-8');
     const jsonData = JSON.parse(data);
-
+    
     // Memastikan bahwa kategori yang diminta tersedia
     if (!jsonData[category]) {
       throw new Error(`Category '${category}' not found.`);
     }
 
-    // Mengganti data kategori dengan data baru
-    jsonData[category].items = newData;
+    const items = jsonData[category].items.join('\n');
+    
+    // Membuat pesan balasan
+    const reply = `${category.toUpperCase()} Details:\n\n${items}`;
+    
+    // Mengambil pesan yang dikutip dari pesan masuk
+    const quotedMessage = m.messages[0];
+    
+    // Membuat objek pesan
+    const message = {
+      text: reply,
+      quoted: quotedMessage,
+    };
 
-    // Menulis data yang telah diubah kembali ke file JSON
-    await fs.writeFile(filePath, JSON.stringify(jsonData, null, 2), 'utf-8');
-
-    console.log(`Data in category '${category}' replaced successfully.`);
+    // Mengirimkan pesan balasan
+    await socket.sendMessage(remoteJid, message, { quoted: quotedMessage });
   } catch (error) {
-    console.error(`Error replacing data in category '${category}':`, error);
+    console.error(`Error reading or sending ${category} details:`, error);
   }
 }
 
-async function handleCommand(socket, remoteJid, m, command) {
-  try {
-    // Mengecek apakah perintah adalah 'replace' dan memiliki data penggantian
-    if (command.command.toLowerCase() === 'replace' && command.category && command.newData) {
-      const { category, newData } = command;
-
-      // Memanggil fungsi replaceDataInJson untuk menggantikan data
-      await replaceDataInJson('./database/json/data.json', category, newData);
-
-      // Memberikan pesan balasan bahwa penggantian data telah berhasil
-      const reply = `Data in category '${category}' replaced successfully.`;
-      await socket.sendMessage(remoteJid, { text: reply }, { quoted: m });
-    } else {
-      // Mengeksekusi logika perintah lainnya...
-      // ...
-    }
-  } catch (error) {
-    console.error('Error handling command:', error);
-  }
-}
-
+module.exports = { handleCommand };
