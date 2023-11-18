@@ -10,7 +10,7 @@ async function pay(socket, remoteJid, m) {
   const quotedMessage = m.messages[0];
   const messageOptions = {
     image: imageBuffer,
-    caption: 'Ini adalah gambar pembayaran, terima kasih!\nAH AH AH AH AH',
+    caption: 'tested',
     quoted: quotedMessage,
   };
 

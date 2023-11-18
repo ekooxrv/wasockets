@@ -5,6 +5,7 @@ const { handleAddCommand } = require("./add-group-id.js");
 const { handleMLCommand, handleFFCommand, handlePULSACommand, handlePLNCommand } = require("./produk.js");
 const { handleMenuCommand } = require("./menu.js");
 const { pay } = require("./pay.js");
+const fs = require('fs').promises; // Import modul fs untuk membaca file
 
 async function connectToWhatsapp() {
   const auth = await useMultiFileAuthState("auth");
@@ -25,7 +26,6 @@ async function connectToWhatsapp() {
     }
   });
 
-  const fs = require('fs').promises; // Import modul fs untuk membaca file
 
 // ...
 
@@ -45,7 +45,7 @@ socket.ev.on("messages.upsert", async (m) => {
 
     // Baca file owner.json
     try {
-      const ownersData = await fs.readFile('./database/json/owner.json', 'utf-8');
+      const ownersData = await fs.readFile('../database/json/owner.json', 'utf-8');
       const owners = JSON.parse(ownersData);
 
       // Periksa apakah senderNumber adalah owner

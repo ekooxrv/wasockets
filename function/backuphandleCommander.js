@@ -1,14 +1,8 @@
-const { default: makeWASocket, useMultiFileAuthState, downloadMediaMessage } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, useMultiFileAuthState, MessageType } = require("@whiskeysockets/baileys");
 const Pino = require("pino");
 const { handleOrderMessage } = require("./order.js");
 const { handleAddCommand, handleDeleteCommand, handleCategoryCommand, handleCommand } = require("./cate.js");
-const { pay, setCaption, setImg } = require("./pay2.js");
-const path = require('path');
-const fs = require('fs');
-const { writeFile } = require('fs/promises');
-
-// ...
-
+const { pay } = require("./pay2.js");
 
 async function connectToWhatsapp() {
   const auth = await useMultiFileAuthState("auth");
@@ -43,38 +37,11 @@ async function connectToWhatsapp() {
 
       // Baca file owner.json
       try {
+
         // Handler untuk semua pengirim
         console.log("Conversation:", m.messages[0].message.conversation);
         const words = m.messages[0].message.conversation.split(" ");
         console.log("Words:", words);
-        console.log("Isi Pesan:", m.messages[0].message);
-
-        if (m.messages[0].message.imageMessage) {
-          const imageMessage = m.messages[0].message.imageMessage;
-          const imageUrl = imageMessage.url;
-          const imageFileName = `image_` + Math.floor(1000 + Math.random() * 9000).toString() + `.jpg`;
-          
-
-          // Simpan gambar ke dalam folder yang sesuai
-          const logger = Pino({ level: "silent" });
-          const imagePath = path.join(__dirname, `../database/gambar/${imageFileName}`);
-          const imageBuffer = await downloadMediaMessage(
-            m.messages[0],
-            'buffer',
-            {},
-            {
-              logger,
-              reuploadRequest: socket.updateMediaMessage,
-            }
-          );
-          await writeFile(imagePath, imageBuffer);
-
-          // Beri tahu pengguna bahwa gambar berhasil disimpan
-          socket.sendMessage(remoteJid, {
-            text: `Gambar berhasil disimpan dengan nama: ${imageFileName}. Gunakan !setimg ${imageFileName} untuk mengeset gambar pay.`,
-          });
-        }
-        
 
         switch (words[0].toUpperCase()) {
           case 'ORDER':
@@ -86,67 +53,30 @@ async function connectToWhatsapp() {
               });
             }
             break;
-            
 
-            case 'SETIMG':
-    if (words.length >= 2) {
-      const newImagePath = path.join(__dirname, `../database/gambar/${words[1]}`);
-      if (fs.existsSync(newImagePath)) {
-        setImg(newImagePath); // Panggil setImg dengan parameter yang sesuai
-        socket.sendMessage(remoteJid, {
-          text: `Gambar berhasil diubah.`,
-        });
-      } else {
-        socket.sendMessage(remoteJid, {
-          text: `File gambar ${words[1]} tidak ditemukan.`,
-        });
-      }
-    } else {
-      socket.sendMessage(remoteJid, {
-        text: "Format !setimg tidak valid. Gunakan: !setimg nama_gambar.jpg",
-      });
-    }
-    break;
-
-
-    case 'SETCAPT':
-      if (words.length >= 2) {
-        const newCaption = words.slice(1).join(' ');
-        setCaption(newCaption);
-        socket.sendMessage(remoteJid, {
-          text: `Caption berhasil diubah menjadi: ${newCaption}`,
-        });
-      } else {
-        socket.sendMessage(remoteJid, {
-          text: "Format !setcapt tidak valid. Gunakan: !setcapt caption_baru",
-        });
-      }
-      break;
-
-    // Menanggapi pesan media
-    case 'PAY':
-      await pay(socket, remoteJid, m);
-      break;
+          case 'PAY':
+            await pay(socket, remoteJid, m);
+            break;
 
           // Menambahkan perintah lain yang dapat diakses oleh semua senderNumber di sini
           case 'MENU':
             await handleCommand(socket, remoteJid, m, 'menu');
             break;
-          case 'ADD':
-            if (words.length >= 2) {
-              const category = words[1].toLowerCase();
-              const description = words.slice(2).join(' ');
-              await handleAddCommand(socket, remoteJid, category, description, m);
-            } else {
-              const adMessage = "Format !add tidak valid. Gunakan: !add category atau !add category description";
+            case 'ADD':
+              if (words.length >= 2) {
+                const category = words[1].toLowerCase();
+                const description = words.slice(2).join(' ');
+                await handleAddCommand(socket, remoteJid, category, description, m);
+              } else {
+                const adMessage = "Format !add tidak valid. Gunakan: !add category atau !add category description";
               const quotedMessage = m.messages[0];
               const addMessage = {
                 text: adMessage,
                 quoted: quotedMessage,
               };
               socket.sendMessage(remoteJid, addMessage, { quoted: quotedMessage });
-            }
-            break;
+              }
+              break;            
 
           case 'DELETE':
             if (words.length >= 2) {
@@ -175,7 +105,7 @@ async function connectToWhatsapp() {
         }
 
       } catch (error) {
-        console.error('Error : ', error);
+        console.error('Error reading owner.json:', error);
       }
     }
   });
